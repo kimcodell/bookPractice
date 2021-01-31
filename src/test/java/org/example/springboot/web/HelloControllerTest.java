@@ -1,9 +1,13 @@
 package org.example.springboot.web;
 
+import org.example.springboot.config.auth.SecurityConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -15,12 +19,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class) //테스트 시 JUnit에 내장된 실행자 외 다른 실행자(지금은 SpringRunner)를 실행시킴. 즉, 스프링부트 테스트와 JUnit 사이 연결자 역할을 함.
-@WebMvcTest //선언 시 @Controller, @ControllerAdvice 사용 가능.
+@WebMvcTest(controllers = HelloController.class,
+        excludeFilters = {
+                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class)
+        }
+) //@WebMvcTest 선언 시 @Controller, @ControllerAdvice 사용 가능. //SecurityConfig를 스캔대 상에서 제거. But, secure옵션은 사용하지 않는 것이 좋음 -> deprecated 됨.
 public class HelloControllerTest {
 
     @Autowired //스프링이 관리하는 빈(Bean)을 주입 받음 //빈 : 반복적으로 코드를 재사용하기 위해 만들어진 클래스. 속성과 메서드로 구성되며, 데이터의 처리를 담당.
     private MockMvc mvc; //스프링 MVC 테스트의 시작점. 이를 통해 GET, POST 등에 대한 API 테스트 가능.
 
+    @WithMockUser(roles="USER")
     @Test
     public void hello가_리턴된다() throws Exception {
         String hello = "hello";
@@ -30,6 +39,7 @@ public class HelloControllerTest {
                 .andExpect(content().string(hello)); //mvc.perform의 결과를 검증. HTTP 응답 본문의 내용을 검증.
     }
 
+    @WithMockUser(roles="USER")
     @Test
     public void helloDto가_리턴된다() throws Exception {
         String name = "hello";
